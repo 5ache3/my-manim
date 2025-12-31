@@ -137,7 +137,7 @@ class Paragraph(VGroup):
             self[line_no].move_to(
                 np.array(
                     [
-                        self.get_right()[0] - self[line_no].width / 2,
+                        self.get_right()[0] - self[line_no].get_width() / 2,
                         self[line_no].get_center()[1],
                         0,
                     ],
