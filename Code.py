@@ -210,30 +210,35 @@ class Code(VMobject):
 
         self.highlighted_lines=set()
 
+    def change_line_opacity(self,line,op):
+        self.code_lines[line].set_opacity(op)
+        self.line_numbers[line].set_opacity(op)
 
-
-    def highlight_line(self,line):
-
-        self.highlighted_lines.add(line-1)
-
-        to_fade=VGroup()
+    def reload_highlighting(self):
+        
         for i in range(len(self.code_lines)):
             if i in self.highlighted_lines:
-                self.code_lines[i].set_opacity(1)
-                self.line_numbers[i].set_opacity(1)
+                self.change_line_opacity(i,1)
             else:
-                to_fade.add(self.code_lines[i],self.line_numbers[i])
-        to_fade.set_opacity(.2)
+                self.change_line_opacity(i,.2)
+
         for i in range(len(self.code_lines)):
             if '\u00B7' in self.code_lines[i][0].get_string():
                 self.code_lines[i][0].set_color_by_text('\u00B7',self.default_background_config['fill_color'])
+
+    def highlight_line(self,line):
+        line-=1
+        if not self.highlighted_lines:
+            self.highlighted_lines.add(line)
+            return self.reload_highlighting()
         
+        self.highlighted_lines.add(line)
+        self.change_line_opacity(line,1)
+
     def remove_highlighting_from_line(self,line):
-        self.highlighted_lines.remove(line-1)
-        self.code_lines[line-1].set_opacity(.2)
-        self.line_numbers[line-1].set_opacity(.2)
-
-
+        line-=1
+        self.highlighted_lines.remove(line)
+        self.change_line_opacity(line,.2)
 
 
     @classmethod
