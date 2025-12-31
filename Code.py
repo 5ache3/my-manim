@@ -37,7 +37,7 @@ class Code(VMobject):
     _styles_list_cache = None
 
     default_background_config = {
-        "buff": 0.3,
+        "buff": 0.7,
         "fill_color": Color("#222222"),
         "stroke_color": WHITE,
         "stroke_width": 1,
@@ -45,7 +45,7 @@ class Code(VMobject):
     }
 
     default_text_config = {
-        "font": "Monospace",
+        # "font": "Monospace",
     }
 
     def __init__(
@@ -57,7 +57,9 @@ class Code(VMobject):
         tab_width=4,
         add_line_numbers=True,
         line_numbers_from=1,
-        background="rectangle",
+        background: Literal["rectangle", "window"] = "rectangle",
+        border_radius: float =.4,
+        tabs_opacity: float =.2,
         background_config=None,
         text_config=None,
     ):
@@ -151,7 +153,8 @@ class Code(VMobject):
         self.code_lines = Paragraph(
             *code_lines,
             show_spaces=True,
-            space_dot_opacity=.2,
+            space_dot_opacity=tabs_opacity,
+            background_color=self.default_background_config['fill_color'],
             **base_paragraph_config,
         )
         i=0
@@ -164,7 +167,7 @@ class Code(VMobject):
             base_paragraph_config.update({"alignment": "right"})
             self.line_numbers = VGroup(
                 *[
-                    Text(str(i),**base_paragraph_config).next_to(self.code_lines[i-1], direction=LEFT*1.5).scale(.8)
+                    Text(str(i),**base_paragraph_config,weight='bold').next_to(self.code_lines[i-1], direction=LEFT*1.5).scale(.8)
                     for i in range(
                         line_numbers_from, line_numbers_from + len(self.code_lines)
                     )
@@ -195,13 +198,43 @@ class Code(VMobject):
                 for c in ["#ff5f56", "#ffbd2e", "#27c93f"]
             ).arrange(RIGHT, buff=0.1)
 
-            buttons.next_to(self, UP, buff=0.15).align_to(self, LEFT)
+            buttons.next_to(self, UP, buff=0.45).align_to(self, LEFT)
             bg = SurroundingRectangle(VGroup(self, buttons), **bg_conf)
             bg.add(buttons)
         else:
             raise ValueError(f"Unknown background type: {background}")
-
+        bg.round_corners(border_radius)
         self.add_to_back(bg)
+        self.scale(.45)
+        self.center()
+
+        self.highlighted_lines=set()
+
+
+
+    def highlight_line(self,line):
+
+        self.highlighted_lines.add(line-1)
+
+        to_fade=VGroup()
+        for i in range(len(self.code_lines)):
+            if i in self.highlighted_lines:
+                self.code_lines[i].set_opacity(1)
+                self.line_numbers[i].set_opacity(1)
+            else:
+                to_fade.add(self.code_lines[i],self.line_numbers[i])
+        to_fade.set_opacity(.2)
+        for i in range(len(self.code_lines)):
+            if '\u00B7' in self.code_lines[i][0].get_string():
+                self.code_lines[i][0].set_color_by_text('\u00B7',self.default_background_config['fill_color'])
+        
+    def remove_highlighting_from_line(self,line):
+        self.highlighted_lines.remove(line-1)
+        self.code_lines[line-1].set_opacity(.2)
+        self.line_numbers[line-1].set_opacity(.2)
+
+
+
 
     @classmethod
     def get_styles_list(cls):
@@ -209,3 +242,24 @@ class Code(VMobject):
             cls._styles_list_cache = list(get_all_styles())
         return cls._styles_list_cache
 
+
+import os,sys
+sys.path.append(os.curdir)
+
+class Test(Scene):
+    def construct(self):
+        code=Code(
+            'test.py',
+            formatter_style='vim',
+            background="window",
+            tabs_opacity=0,
+            tab_width=3
+        )
+        code.highlight_line(1)
+        code.highlight_line(2)
+        code.remove_highlighting_from_line(2)
+        code.highlight_line(3)
+        code.highlight_line(9)
+        code.highlight_line(12)
+        self.add(code)
+        self.wait(2)

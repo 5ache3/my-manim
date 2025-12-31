@@ -1,4 +1,5 @@
 from manimlib import *
+from manimlib.config import manim_config
 
 class Paragraph(VGroup):
    
@@ -9,8 +10,10 @@ class Paragraph(VGroup):
         alignment: str | None = 'left',
         show_spaces: bool = True,
         space_dot_opacity: float = 0,
+        background_color=None,
         **kwargs,
     ):
+        self.background_color=background_color
         self.show_spaces=show_spaces
         self.space_dot_opacity=space_dot_opacity
         self.line_spacing = line_spacing
@@ -28,6 +31,15 @@ class Paragraph(VGroup):
         self.lines_initial_positions = [line.get_center() for line in self.lines[0]]
         self.add(*self.lines[0])
         self.move_to(np.array([0, 0, 0]))
+        max_h=0
+        for c in self.chars:
+            max_h=max(max_h,c.get_height())
+
+        for c in self.chars:
+            if c.get_height()==0:
+                c.add(Text(".",fill_color=Color(background_color)).set_opacity(0))
+            c.set_height(max_h)
+    
         self.chars.arrange(DOWN)
         if self.alignment:
             self._set_all_lines_alignments(self.alignment)
@@ -75,11 +87,11 @@ class Paragraph(VGroup):
                     ]])
                 import re
                 s = re.sub(r'^( {2,})', lambda m: m.group(1).replace(' ', '\u00B7'), s)
-                t=Text(s)
+                t=Text(s,t2c={"\u00B7":self.background_color})
 
-                for i in range(len(s)) :
-                    if s[i]=='\u00B7':
-                        t[i].set_opacity(self.space_dot_opacity)
+                # for i in range(len(s)) :
+                #     if s[i]=='\u00B7':
+                #         t[i].set_opacity(self.space_dot_opacity).set_fill(self.background_color)
             else:   
                 t=Text(''.join([*self.lines_text.get_string()[
                         char_index_counter : char_index_counter + char_count
