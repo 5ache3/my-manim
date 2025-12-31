@@ -215,7 +215,10 @@ class Code(VMobject):
         self.line_numbers[line].set_opacity(op)
 
     def reload_highlighting(self):
-        
+        if not self.highlighted_lines:
+            self.line_numbers.set_opacity(1)
+            self.code_lines.set_opacity(1)
+            return
         for i in range(len(self.code_lines)):
             if i in self.highlighted_lines:
                 self.change_line_opacity(i,1)
@@ -234,12 +237,21 @@ class Code(VMobject):
         
         self.highlighted_lines.add(line)
         self.change_line_opacity(line,1)
+    
+    def highlight_range(self,start,end):
+        for i in range(start,end):
+            self.highlight_line(i)
+
+
 
     def remove_highlighting_from_line(self,line):
         line-=1
         self.highlighted_lines.remove(line)
         self.change_line_opacity(line,.2)
 
+    def clear_highlighting(self):
+        self.highlighted_lines.clear()
+        self.reload_highlighting()
 
     @classmethod
     def get_styles_list(cls):
@@ -266,5 +278,7 @@ class Test(Scene):
         code.highlight_line(3)
         code.highlight_line(9)
         code.highlight_line(12)
-        self.add(code)
+        code.clear_highlighting()
+        code.highlight_range(9,15)
+        self.play(Write(code))
         self.wait(2)
