@@ -46,7 +46,6 @@ class Code(VMobject):
 
     default_text_config = {
         "font": "Monospace",
-        "font_size": 24,
     }
 
     def __init__(
@@ -74,8 +73,9 @@ class Code(VMobject):
         else:
             raise ValueError("Either code_file or code_string must be specified.")
 
-        code_string = code_string.expandtabs(tab_width)
-
+        code_string = code_string.expandtabs(tab_width).replace(' '*tab_width,"\u00B7"*tab_width)
+        
+        code_lines_=code_string.split('\n')
         # ---------------- Pygments ----------------
         formatter = HtmlFormatter(
             style=formatter_style,
@@ -95,6 +95,15 @@ class Code(VMobject):
         color_ranges = []
         current_line_color_ranges = []
         current_line_char_index = 0
+
+        def num_spaces_before(line_ind,start_ind):
+            if start_ind==0:
+                return 0
+            line=code_lines_[line_ind][:start_ind]
+            return line.count(' ')
+        
+
+        i=0
         for child in self._code_html.children:
             if child.name == "span":
                 try:
@@ -105,17 +114,21 @@ class Code(VMobject):
                     color = None if match_ is None else match_.group(1)
                 except KeyError:
                     color = None
+                n=num_spaces_before(i,current_line_char_index)
                 current_line_color_ranges.append(
                     (
                         current_line_char_index,
                         current_line_char_index + len(child.text),
                         color,
+                        n
                     )
                 )
+                
                 current_line_char_index += len(child.text)
             else:
                 for char in child.text:
                     if char == "\n":
+                        i+=1
                         color_ranges.append(current_line_color_ranges)
                         current_line_color_ranges = []
                         current_line_char_index = 0
@@ -137,26 +150,29 @@ class Code(VMobject):
 
         self.code_lines = Paragraph(
             *code_lines,
+            show_spaces=True,
+            space_dot_opacity=.2,
             **base_paragraph_config,
         )
+        i=0
         for line, color_range in zip(self.code_lines, color_ranges):
-            for start, end, color in color_range:
-                line[start:end].set_color(color)
+            for start, end, color,n in color_range:
+                line[0][start-n:end-n].set_color(color)
+            i+=1
 
         if add_line_numbers:
             base_paragraph_config.update({"alignment": "right"})
-            self.line_numbers = Paragraph(
+            self.line_numbers = VGroup(
                 *[
-                    str(i)
+                    Text(str(i),**base_paragraph_config).next_to(self.code_lines[i-1], direction=LEFT*1.5).scale(.8)
                     for i in range(
                         line_numbers_from, line_numbers_from + len(self.code_lines)
                     )
                 ],
-                **base_paragraph_config,
             )
-            self.line_numbers.next_to(self.code_lines, direction=LEFT).align_to(
-                self.code_lines, UP
-            )
+            # self.line_numbers.next_to(self.code_lines, direction=LEFT).align_to(
+            #     self.code_lines, UP
+            # )
             self.add(self.line_numbers)
 
         for line in self.code_lines:
@@ -175,7 +191,7 @@ class Code(VMobject):
             bg = SurroundingRectangle(self, **bg_conf)
         elif background == "window":
             buttons = VGroup(
-                Dot(radius=0.07, fill_color=Color(c), stroke_width=0)
+                Dot(radius=0.17, fill_color=Color(c), stroke_width=0)
                 for c in ["#ff5f56", "#ffbd2e", "#27c93f"]
             ).arrange(RIGHT, buff=0.1)
 
@@ -192,3 +208,4 @@ class Code(VMobject):
         if cls._styles_list_cache is None:
             cls._styles_list_cache = list(get_all_styles())
         return cls._styles_list_cache
+

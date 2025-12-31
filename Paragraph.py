@@ -7,8 +7,12 @@ class Paragraph(VGroup):
         *text: str,
         line_spacing: float = -1,
         alignment: str | None = 'left',
+        show_spaces: bool = True,
+        space_dot_opacity: float = 0,
         **kwargs,
     ):
+        self.show_spaces=show_spaces
+        self.space_dot_opacity=space_dot_opacity
         self.line_spacing = line_spacing
         self.alignment = alignment
         self.consider_spaces_as_chars = kwargs.get("disable_ligatures", True)
@@ -64,13 +68,27 @@ class Paragraph(VGroup):
             #         char_index_counter : char_index_counter + char_count
             #     ]]]
             # )
-            chars[line_no].add(
-                Text(
-                ''.join([*self.lines_text.get_string()[
-                    char_index_counter : char_index_counter + char_count
-                ]])
+
+            if self.show_spaces:
+                s=''.join([*self.lines_text.get_string()[
+                        char_index_counter : char_index_counter + char_count
+                    ]])
+                import re
+                s = re.sub(r'^( {2,})', lambda m: m.group(1).replace(' ', '\u00B7'), s)
+                t=Text(s)
+
+                for i in range(len(s)) :
+                    if s[i]=='\u00B7':
+                        t[i].set_opacity(self.space_dot_opacity)
+            else:   
+                t=Text(''.join([*self.lines_text.get_string()[
+                        char_index_counter : char_index_counter + char_count
+                    ]])
                 )
-            )
+
+
+            chars[line_no].add(t)
+
             char_index_counter += char_count
             if self.consider_spaces_as_chars:
                 # If spaces count as characters, count the extra \n character
