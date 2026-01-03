@@ -9,7 +9,7 @@ from manimlib.mobject.geometry import Line, Polygon, Rectangle
 from manimlib.mobject.svg.text_mobject import Text
 from manimlib import Tex
 from manimlib.utils.color import Color
-
+from manimlib import line_intersection
 # --- ManimGL Animation Imports ---
 from manimlib.animation.animation import Animation
 from manimlib.animation.creation import ShowCreation
@@ -148,8 +148,8 @@ class Table(VGroup):
         if self.include_background_rectangle:
             # Add a single background rectangle for the entire table using a base Rectangle
             bg_rect = Rectangle(
-                width=self.get_width() + self.h_buff, 
-                height=self.get_height() + self.v_buff,
+                width=self.get_width(), 
+                height=self.get_height(),
                 fill_color=self.background_rectangle_color,
                 fill_opacity=1.0, 
                 stroke_width=0,
@@ -228,12 +228,9 @@ class Table(VGroup):
         
         line_group = VGroup()
         
+        # Outer Top Line
         if self.include_outer_lines:
-            # Outer Top Line
             anchor = rows_group[0].get_top()[1] + 0.5 * self.v_buff
-            line_group.add(Line([anchor_left, anchor, 0], [anchor_right, anchor, 0], **self.line_config))
-            # Outer Bottom Line
-            anchor = rows_group[-1].get_bottom()[1] - 0.5 * self.v_buff
             line_group.add(Line([anchor_left, anchor, 0], [anchor_right, anchor, 0], **self.line_config))
             
         # Inner Horizontal Lines
@@ -241,6 +238,12 @@ class Table(VGroup):
             top_y = rows_group[k].get_bottom()[1]
             bottom_y = rows_group[k + 1].get_top()[1]
             anchor = (top_y + bottom_y) / 2
+            line_group.add(Line([anchor_left, anchor, 0], [anchor_right, anchor, 0], **self.line_config))
+        
+
+        # Outer Bottom Line
+        if self.include_outer_lines:
+            anchor = rows_group[-1].get_bottom()[1] - 0.5 * self.v_buff
             line_group.add(Line([anchor_left, anchor, 0], [anchor_right, anchor, 0], **self.line_config))
             
         self.horizontal_lines = line_group
@@ -258,12 +261,9 @@ class Table(VGroup):
         
         line_group = VGroup()
         
+        # Outer Left Line
         if self.include_outer_lines:
-            # Outer Left Line
             anchor = columns_group[0].get_left()[0] - 0.5 * self.h_buff
-            line_group.add(Line([anchor, anchor_top, 0], [anchor, anchor_bottom, 0], **self.line_config))
-            # Outer Right Line
-            anchor = columns_group[-1].get_right()[0] + 0.5 * self.h_buff
             line_group.add(Line([anchor, anchor_top, 0], [anchor, anchor_bottom, 0], **self.line_config))
             
         # Inner Vertical Lines
@@ -272,6 +272,11 @@ class Table(VGroup):
             left_x = columns_group[k + 1].get_left()[0]
             anchor = (right_x + left_x) / 2
             line_group.add(Line([anchor, anchor_bottom, 0], [anchor, anchor_top, 0], **self.line_config))
+        
+        # Outer Right Line
+        if self.include_outer_lines:
+            anchor = columns_group[-1].get_right()[0] + 0.5 * self.h_buff
+            line_group.add(Line([anchor, anchor_top, 0], [anchor, anchor_bottom, 0], **self.line_config))
             
         self.vertical_lines = line_group
         self.add(line_group)
@@ -384,16 +389,26 @@ class Table(VGroup):
         return self.mob_table[pos[0]][pos[1]]
     
     def get_cell_b(self, pos: Sequence[int] = (1, 1), **kwargs) -> Polygon:
-        row = self.get_rows()[pos[0]]
-        col = self.get_columns()[pos[1]]
         
-        # Calculate the four corners of the cell polygon
-        edge_UL = [col.get_left()[0] - self.h_buff / 2, row.get_top()[1] + self.v_buff / 2, 0]
-        edge_UR = [col.get_right()[0] + self.h_buff / 2, row.get_top()[1] + self.v_buff / 2, 0]
-        edge_DR = [col.get_right()[0] + self.h_buff / 2, row.get_bottom()[1] - self.v_buff / 2, 0]
-        edge_DL = [col.get_left()[0] - self.h_buff / 2, row.get_bottom()[1] - self.v_buff / 2, 0]
         
-        rec = Polygon(edge_UL, edge_UR, edge_DR, edge_DL, **kwargs)
+        h1=[
+            self.horizontal_lines[pos[0]].get_start(),
+            self.horizontal_lines[pos[0]].get_end()]
+        h2=[
+            self.horizontal_lines[pos[0]+1].get_start(),
+            self.horizontal_lines[pos[0]+1].get_end()]
+        v1=[
+            self.vertical_lines[pos[1]].get_start(),
+            self.vertical_lines[pos[1]].get_end()]
+        v2=[
+            self.vertical_lines[pos[1]+1].get_start(),
+            self.vertical_lines[pos[1]+1].get_end()]
+        p1=line_intersection(h1,v1)
+        p2=line_intersection(h1,v2)
+        p3=line_intersection(v2,h2)
+        p4=line_intersection(v1,h2)
+        rec=Polygon(p1,p2,p3,p4,**kwargs)
+        # rec = Polygon(edge_UL, edge_UR, edge_DR, edge_DL, **kwargs)
         return rec
 
     def get_highlighted_cell(
@@ -568,3 +583,4 @@ class Table(VGroup):
         self.v_buff *= scale_factor
         super().scale(scale_factor, **kwargs)
         return self
+

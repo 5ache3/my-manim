@@ -260,25 +260,3 @@ class Code(VMobject):
         return cls._styles_list_cache
 
 
-import os,sys
-sys.path.append(os.curdir)
-
-class Test(Scene):
-    def construct(self):
-        code=Code(
-            'test.py',
-            formatter_style='vim',
-            background="window",
-            tabs_opacity=0,
-            tab_width=3
-        )
-        code.highlight_line(1)
-        code.highlight_line(2)
-        code.remove_highlighting_from_line(2)
-        code.highlight_line(3)
-        code.highlight_line(9)
-        code.highlight_line(12)
-        code.clear_highlighting()
-        code.highlight_range(9,15)
-        self.play(Write(code))
-        self.wait(2)
