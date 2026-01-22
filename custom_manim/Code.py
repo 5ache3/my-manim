@@ -148,7 +148,7 @@ class Code(VMobject):
         base_paragraph_config = self.default_text_config.copy()
         base_paragraph_config.update(paragraph_config)
 
-        from Paragraph import Paragraph
+        from .Paragraph import Paragraph
 
         self.code_lines = Paragraph(
             *code_lines,

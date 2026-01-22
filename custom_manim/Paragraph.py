@@ -1,5 +1,6 @@
+import re
+import numpy as np
 from manimlib import *
-from manimlib.config import manim_config
 
 class Paragraph(VGroup):
    
@@ -85,7 +86,6 @@ class Paragraph(VGroup):
                 s=''.join([*self.lines_text.get_string()[
                         char_index_counter : char_index_counter + char_count
                     ]])
-                import re
                 s = re.sub(r'^( {2,})', lambda m: m.group(1).replace(' ', '\u00B7'), s)
                 t=Text(s,t2c={"\u00B7":self.background_color})
 
