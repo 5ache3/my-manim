@@ -88,6 +88,8 @@ class Paragraph(VGroup):
                     ]])
                 s = re.sub(r'^( {2,})', lambda m: m.group(1).replace(' ', '\u00B7'), s)
                 t=Text(s,t2c={"\u00B7":self.background_color})
+                for part in t.get_parts_by_text("\u00B7"):
+                    part.set_opacity(self.space_dot_opacity)
 
                 # for i in range(len(s)) :
                 #     if s[i]=='\u00B7':

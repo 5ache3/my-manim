@@ -64,6 +64,7 @@ class Code(VMobject):
         text_config=None,
     ):
         super().__init__()
+        self.tabs_opacity = tabs_opacity
 
         # ---------------- Load code ----------------
         if code_file:
@@ -209,6 +210,7 @@ class Code(VMobject):
         self.center()
 
         self.highlighted_lines=set()
+        self.reload_highlighting()
 
     def change_line_opacity(self,line,op):
         self.code_lines[line].set_opacity(op)
@@ -218,16 +220,19 @@ class Code(VMobject):
         if not self.highlighted_lines:
             self.line_numbers.set_opacity(1)
             self.code_lines.set_opacity(1)
-            return
-        for i in range(len(self.code_lines)):
-            if i in self.highlighted_lines:
-                self.change_line_opacity(i,1)
-            else:
-                self.change_line_opacity(i,.2)
+        else:
+            for i in range(len(self.code_lines)):
+                if i in self.highlighted_lines:
+                    self.change_line_opacity(i,1)
+                else:
+                    self.change_line_opacity(i,.2)
 
         for i in range(len(self.code_lines)):
-            if '\u00B7' in self.code_lines[i][0].get_string():
-                self.code_lines[i][0].set_color_by_text('\u00B7',self.default_background_config['fill_color'])
+            text_obj = self.code_lines[i][0]
+            if '\u00B7' in text_obj.get_string():
+                text_obj.set_color_by_text('\u00B7', self.default_background_config['fill_color'])
+                for part in text_obj.get_parts_by_text('\u00B7'):
+                    part.set_opacity(self.tabs_opacity)
 
     def highlight_line(self,line):
         line-=1
