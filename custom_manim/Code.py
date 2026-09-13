@@ -57,7 +57,7 @@ class Code(VMobject):
         tab_width=4,
         add_line_numbers=True,
         line_numbers_from=1,
-        background: Literal["rectangle", "window"] = "rectangle",
+        background: Literal["rectangle", "window"] = "window",
         border_radius: float =.4,
         tabs_opacity: float =.2,
         background_config=None,
