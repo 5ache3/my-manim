@@ -38,7 +38,9 @@ class Paragraph(VGroup):
 
         for c in self.chars:
             if c.get_height()==0:
-                c.add(Text(".",fill_color=Color(background_color)).set_opacity(0))
+                placeholder=Text(".",fill_color=Color(background_color)).set_opacity(0)
+                placeholder.svg_skip_text=True
+                c.add(placeholder)
             c.set_height(max_h)
     
         self.chars.arrange(DOWN)
@@ -88,6 +90,8 @@ class Paragraph(VGroup):
                     ]])
                 s = re.sub(r'^( {2,})', lambda m: m.group(1).replace(' ', '\u00B7'), s)
                 t=Text(s,t2c={"\u00B7":self.background_color})
+                # lets scene_to_svg copy the placeholder dots as spaces
+                t.svg_space_char="\u00B7"
                 for part in t.get_parts_by_text("\u00B7"):
                     part.set_opacity(self.space_dot_opacity)
 
